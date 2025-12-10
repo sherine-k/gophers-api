@@ -21,10 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Podman
-        uses: redhat-actions/podman-install@main  
-
-      - name: Build Action
+      - name: Prepare auth
         run: |
           auth_file=$(cat << 'EOF1'
           {
@@ -39,25 +36,36 @@ jobs:
           )
           echo "$auth_file" > /tmp/auth.json
 
-          podman login --authfile /tmp/auth.json registry.redhat.io 
-          podman build --authfile /tmp/auth.json -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
-          podman login -p ${{ secrets.QUAY_TOKEN }} -u skhoury ${{ env.REGISTRY }}
-          podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          
-          podman pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
-          echo "DIGEST=$(podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
-
-      - name: docker login to quay.io
-        uses: docker/login-action@v3
+      - name: Podman login
+        uses: redhat-actions/podman-login@main
         with:
           registry: quay.io
           username: skhoury
           password: ${{ secrets.QUAY_TOKEN }}
+          auth_file_path: /tmp/auth.json
+      
+      - name: Buildah build
+        id: build-image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          containerfiles: ./Dockerfile
+          extra_args: "--authfile /tmp/auth.json"
+          
+      - name: Buildah push
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
+          username: skhoury
+          password: ${{ secrets.QUAY_TOKEN }}
 
+     
       - name: Attest
         uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ env.DIGEST }}
+          subject-digest: ${{ steps.push-to-quay.outputs.digest }}
           push-to-registry: true

@@ -41,6 +41,7 @@ jobs:
 
           podman login --authfile /tmp/auth.json registry.redhat.io 
           podman build --authfile /tmp/auth.json -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+          podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
           echo "DIGEST=$(podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
           podman login -p ${{ secrets.QUAY_TOKEN }} -u skhoury ${{ env.REGISTRY }}
           podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

@@ -26,7 +26,7 @@ jobs:
 
       - name: Build Action
         run: |
-          cat << EOF > /tmp/auth.json
+          auth_file=$(cat << 'EOF1'
           {
             "auths": {
               "registry.redhat.io": {
@@ -35,7 +35,9 @@ jobs:
               }
             }
           }
-          EOF 
+          EOF1
+          )
+          echo "$auth_file" > /tmp/auth.json
 
           podman login --authfile /tmp/auth.json registry.redhat.io 
           podman build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .

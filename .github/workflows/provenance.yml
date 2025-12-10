@@ -34,4 +34,3 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build-image.outputs.digest }}
           push-to-registry: false
-          provenance-format: in-toto

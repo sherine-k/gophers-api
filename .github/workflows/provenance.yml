@@ -23,8 +23,28 @@ jobs:
 
       - name: Install Podman
         uses: redhat-actions/podman-install@main  
+
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: registry.redhat.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build Action
         run: |
+          cat << EOF > /tmp/auth.json
+            {
+              "auths": {
+                "registry.redhat.io": {
+                  "auth": "${{ secrets.REGISTRY_TOKEN }}",
+                  "email": "skhoury@redhat.com"
+                }
+              }
+            }
+          EOF 
+
+          podman login --authfile /tmp/auth.json registry.redhat.io 
           podman build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
           digest=`podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'`
       

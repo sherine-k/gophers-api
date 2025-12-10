@@ -41,11 +41,12 @@ jobs:
 
           podman login --authfile /tmp/auth.json registry.redhat.io 
           podman build --authfile /tmp/auth.json -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
-          digest=`podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'`
+          echo "DIGEST=$(podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
+          podman push -p ${{ secrets.QUAY_TOKEN }} -u skhoury ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
       
       - name: Attest
         uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.build-image.outputs.digest }}
-          push-to-registry: false
+          subject-digest: ${{ env.DIGEST }}
+          push-to-registry: true

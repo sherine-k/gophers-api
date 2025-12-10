@@ -40,7 +40,7 @@ jobs:
           echo "$auth_file" > /tmp/auth.json
 
           podman login --authfile /tmp/auth.json registry.redhat.io 
-          podman build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
+          podman build --authfile /tmp/auth.json -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest .
           digest=`podman inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'`
       
       - name: Attest

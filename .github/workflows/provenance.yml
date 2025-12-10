@@ -27,14 +27,14 @@ jobs:
       - name: Build Action
         run: |
           cat << EOF > /tmp/auth.json
-            {
-              "auths": {
-                "registry.redhat.io": {
-                  "auth": "${{ secrets.REGISTRY_TOKEN }}",
-                  "email": "skhoury@redhat.com"
-                }
+          {
+            "auths": {
+              "registry.redhat.io": {
+                "auth": "${{ secrets.REGISTRY_TOKEN }}",
+                "email": "skhoury@redhat.com"
               }
             }
+          }
           EOF 
 
           podman login --authfile /tmp/auth.json registry.redhat.io 

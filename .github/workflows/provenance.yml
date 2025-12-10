@@ -17,7 +17,7 @@ jobs:
       attestations: write
     env:
       IMAGE_NAME: gophers-api
-      REGISTRY: quay.io/skhoury/gophers-api
+      REGISTRY: quay.io/skhoury
     steps:
       - uses: actions/checkout@v4
 

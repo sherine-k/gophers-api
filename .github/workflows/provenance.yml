@@ -1,7 +1,7 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Validate
+name: Provenance
 
 on:
   push:
@@ -19,79 +19,81 @@ jobs:
       IMAGE_NAME: gophers-api
       QUAY_REGISTRY: quay.io/skhoury
       HARBOR_REGISTRY: 79352h8v.c1.de1.container-registry.ovh.net/public
+      DOCKER_CONFIG: /tmp/auth.json
     steps:
       - uses: actions/checkout@v4
 
-      # - name: Prepare auth
-      #   run: |
-      #     auth_file=$(cat << 'EOF1'
-      #     {
-      #       "auths": {
-      #         "registry.redhat.io": {
-      #           "auth": "${{ secrets.REGISTRY_TOKEN }}",
-      #           "email": "skhoury@redhat.com"
-      #         }
-      #       }
-      #     }
-      #     EOF1
-      #     )
-      #     echo "$auth_file" > /tmp/auth.json
+      - name: Prepare auth
+        run: |
+          auth_file=$(cat << 'EOF1'
+          {
+            "auths": {
+              "registry.redhat.io": {
+                "auth": "${{ secrets.REGISTRY_TOKEN }}",
+                "email": "skhoury@redhat.com"
+              },
+              "quay.io": {
+                "auth": "${{ secrets.QUAY_TOKEN }}",
+                "email": "skhoury@redhat.com"
+            }
+          }
+          EOF1
+          )
+          echo "$auth_file" > /tmp/auth.json
 
-      # - name: Podman login
-      #   uses: redhat-actions/podman-login@main
-      #   with:
-      #     registry: quay.io
-      #     username: skhoury
-      #     password: ${{ secrets.QUAY_TOKEN }}
-      #     # auth_file_path: /tmp/auth.json
+      - name: Podman login
+        uses: redhat-actions/podman-login@main
+        with:
+          registry: quay.io
+          auth_file_path: /tmp/auth.json
       
-      # - name: Buildah build
-      #   id: build-image
-      #   uses: redhat-actions/buildah-build@main
-      #   with:
-      #     image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
-      #     containerfiles: ./Dockerfile
-      #     # extra_args: "--authfile /tmp/auth.json"
-      #     tags: latest
-      # - name: Buildah push
-      #   id: push-to-quay
-      #   uses: redhat-actions/push-to-registry@v2
-      #   with:
-      #     image: ${{ steps.build-image.outputs.image }}
-      #     tags: ${{ steps.build-image.outputs.tags }}
-      #     registry: ${{ env.QUAY_REGISTRY }}
-      #     username: skhoury
-      #     password: ${{ secrets.QUAY_TOKEN }}
-      # - name: Get the digest back 
-      #   run: |
-      #     podman pull ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-      #     podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
-      #     echo "DIGEST=$(podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
-      # - name: Attest and push to Quay
-      #   uses: actions/attest-build-provenance@v3
-      #   with:
-      #     subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
-      #     subject-digest: ${{ env.DIGEST }}
-      #     push-to-registry: true
-
-      - name: Login to Harbor
-        uses: docker/login-action@v3
+      - name: Buildah build
+        id: build-image
+        uses: redhat-actions/buildah-build@main
         with:
-          registry: ${{ env.HARBOR_REGISTRY }}
-          username: ${{ vars.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
-      - name: Build and push to Harbor
-        id: build-and-push-harbor
-        uses: docker/build-push-action@v4
+          image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
+          containerfiles: ./Dockerfile
+          extra_args: "--authfile /tmp/auth.json"
+          tags: latest
+      - name: Buildah push
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
         with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
-      - name: Attest
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.QUAY_REGISTRY }}
+          extra_args: "--authfile /tmp/auth.json"
+          
+      - name: Get the digest back 
+        run: |
+          podman pull ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
+          echo "DIGEST=$(podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
+      - name: Attest and push to Quay
         uses: actions/attest-build-provenance@v3
         with:
-          subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.build-and-push-harbor.outputs.digest }}
+          subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ env.DIGEST }}
           push-to-registry: true
+
+      # - name: Login to Harbor
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ env.HARBOR_REGISTRY }}
+      #     username: ${{ vars.HARBOR_USERNAME }}
+      #     password: ${{ secrets.HARBOR_PASSWORD }}
+      # - name: Build and push to Harbor
+      #   id: build-and-push-harbor
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     push: true
+      #     tags: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      # - name: Attest
+      #   uses: actions/attest-build-provenance@v3
+      #   with:
+      #     subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}
+      #     subject-digest: ${{ steps.build-and-push-harbor.outputs.digest }}
+      #     push-to-registry: true

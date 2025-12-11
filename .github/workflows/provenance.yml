@@ -73,7 +73,7 @@ jobs:
           subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ env.digest }}
           push-to-registry: true
-          
+
       - name: Login to Harbor
         uses: docker/login-action@v3
         with:
@@ -87,7 +87,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          docker pull 79352h8v.c1.de1.container-registry.ovh.net/public/gophers-api@sha256:75edf6695d143d270674699915b319c7e83b22a442de1319156cf61b611f6164
           tags: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Attest

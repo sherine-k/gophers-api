@@ -25,6 +25,7 @@ jobs:
 
       - name: Prepare auth
         run: |
+          mkdir -p /tmp/.docker
           auth_file=$(cat << 'EOF1'
           {
             "auths": {

@@ -40,13 +40,7 @@ jobs:
           EOF1
           )
           echo "$auth_file" > /tmp/auth.json
-
-      - name: Podman login
-        uses: redhat-actions/podman-login@main
-        with:
-          registry: quay.io
-          auth_file_path: /tmp/auth.json
-      
+   
       - name: Buildah build
         id: build-image
         uses: redhat-actions/buildah-build@main
@@ -63,7 +57,7 @@ jobs:
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.QUAY_REGISTRY }}
           extra_args: "--authfile /tmp/auth.json"
-          
+
       - name: Get the digest back 
         run: |
           podman pull ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest

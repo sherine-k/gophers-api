@@ -19,7 +19,7 @@ jobs:
       IMAGE_NAME: gophers-api
       QUAY_REGISTRY: quay.io/skhoury
       HARBOR_REGISTRY: 79352h8v.c1.de1.container-registry.ovh.net/public
-      DOCKER_CONFIG: /tmp/auth.json
+      DOCKER_CONFIG: /tmp/.docker
     steps:
       - uses: actions/checkout@v4
 
@@ -39,7 +39,7 @@ jobs:
           }
           EOF1
           )
-          echo "$auth_file" > /tmp/auth.json
+          echo "$auth_file" > /tmp/.docker/config.json
    
       - name: Buildah build
         id: build-image
@@ -47,7 +47,6 @@ jobs:
         with:
           image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
           containerfiles: ./Dockerfile
-          extra_args: "--authfile /tmp/auth.json"
           tags: latest
       - name: Buildah push
         id: push-to-quay
@@ -56,7 +55,6 @@ jobs:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.QUAY_REGISTRY }}
-          extra_args: "--authfile /tmp/auth.json"
 
       - name: Get the digest back 
         run: |

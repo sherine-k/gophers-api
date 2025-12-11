@@ -71,7 +71,7 @@ jobs:
         uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ env.digest }}
+          subject-digest: ${{ env.DIGEST }}
           push-to-registry: true
 
       - name: Login to Harbor

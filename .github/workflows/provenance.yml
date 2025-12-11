@@ -36,7 +36,7 @@ jobs:
               "quay.io": {
                 "auth": "${{ secrets.QUAY_TOKEN }}",
                 "email": "skhoury@redhat.com"
-              },
+              }
             }
           }
           EOF1

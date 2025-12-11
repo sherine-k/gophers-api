@@ -70,7 +70,7 @@ jobs:
           subject-digest: ${{ env.DIGEST }}
           push-to-registry: true
 
-      # - name: Login to Harbor
+      # - name: Login to Harbor 
       #   uses: docker/login-action@v3
       #   with:
       #     registry: ${{ env.HARBOR_REGISTRY }}

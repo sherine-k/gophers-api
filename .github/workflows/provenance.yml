@@ -19,13 +19,12 @@ jobs:
       IMAGE_NAME: gophers-api
       QUAY_REGISTRY: quay.io/skhoury
       HARBOR_REGISTRY: 79352h8v.c1.de1.container-registry.ovh.net/public
-      DOCKER_CONFIG: /tmp/.docker
     steps:
       - uses: actions/checkout@v4
 
       - name: Prepare auth
         run: |
-          mkdir -p /tmp/.docker
+          mkdir -p $HOME/.docker
           auth_file=$(cat << 'EOF1'
           {
             "auths": {
@@ -41,7 +40,7 @@ jobs:
           }
           EOF1
           )
-          echo "$auth_file" > /tmp/.docker/config.json
+          echo "$auth_file" > $HOME/.docker/config.json
    
       - name: Buildah build
         id: build-image

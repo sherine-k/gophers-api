@@ -37,42 +37,42 @@ jobs:
       #     )
       #     echo "$auth_file" > /tmp/auth.json
 
-      - name: Podman login
-        uses: redhat-actions/podman-login@main
-        with:
-          registry: quay.io
-          username: skhoury
-          password: ${{ secrets.QUAY_TOKEN }}
-          # auth_file_path: /tmp/auth.json
+      # - name: Podman login
+      #   uses: redhat-actions/podman-login@main
+      #   with:
+      #     registry: quay.io
+      #     username: skhoury
+      #     password: ${{ secrets.QUAY_TOKEN }}
+      #     # auth_file_path: /tmp/auth.json
       
-      - name: Buildah build
-        id: build-image
-        uses: redhat-actions/buildah-build@main
-        with:
-          image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
-          containerfiles: ./Dockerfile
-          # extra_args: "--authfile /tmp/auth.json"
-          tags: latest
-      - name: Buildah push
-        id: push-to-quay
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.QUAY_REGISTRY }}
-          username: skhoury
-          password: ${{ secrets.QUAY_TOKEN }}
-      - name: Get the digest back 
-        run: |
-          podman pull ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
-          echo "DIGEST=$(podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
-      - name: Attest and push to Quay
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ env.DIGEST }}
-          push-to-registry: true
+      # - name: Buildah build
+      #   id: build-image
+      #   uses: redhat-actions/buildah-build@main
+      #   with:
+      #     image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
+      #     containerfiles: ./Dockerfile
+      #     # extra_args: "--authfile /tmp/auth.json"
+      #     tags: latest
+      # - name: Buildah push
+      #   id: push-to-quay
+      #   uses: redhat-actions/push-to-registry@v2
+      #   with:
+      #     image: ${{ steps.build-image.outputs.image }}
+      #     tags: ${{ steps.build-image.outputs.tags }}
+      #     registry: ${{ env.QUAY_REGISTRY }}
+      #     username: skhoury
+      #     password: ${{ secrets.QUAY_TOKEN }}
+      # - name: Get the digest back 
+      #   run: |
+      #     podman pull ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      #     podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
+      #     echo "DIGEST=$(podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
+      # - name: Attest and push to Quay
+      #   uses: actions/attest-build-provenance@v3
+      #   with:
+      #     subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
+      #     subject-digest: ${{ env.DIGEST }}
+      #     push-to-registry: true
 
       - name: Login to Harbor
         uses: docker/login-action@v3

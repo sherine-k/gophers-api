@@ -17,7 +17,8 @@ jobs:
       attestations: write
     env:
       IMAGE_NAME: gophers-api
-      REGISTRY: quay.io/skhoury
+      QUAY_REGISTRY: quay.io/skhoury
+      HARBOR_REGISTRY: 79352h8v.c1.de1.container-registry.ovh.net/public
     steps:
       - uses: actions/checkout@v4
 
@@ -48,7 +49,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@main
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
           containerfiles: ./Dockerfile
           extra_args: "--authfile /tmp/auth.json"
           tags: latest
@@ -58,14 +59,40 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.REGISTRY }}
+          registry: ${{ env.QUAY_REGISTRY }}
           username: skhoury
           password: ${{ secrets.QUAY_TOKEN }}
+      - name: Get the digest back 
+        run: |
+          podman pull ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}'
+          echo "DIGEST=$(podman inspect ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format='{{index .Digest}}')" >> $GITHUB_ENV
+      - name: Attest and push to Quay
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-name: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ env.digest }}
+          push-to-registry: true
+          
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.HARBOR_REGISTRY }}
+          username: ${{ vars.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+      - name: Build and push to Harbor
+        id: build-and-push-harbor
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          docker pull 79352h8v.c1.de1.container-registry.ovh.net/public/gophers-api@sha256:75edf6695d143d270674699915b319c7e83b22a442de1319156cf61b611f6164
+          tags: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-     
       - name: Attest
         uses: actions/attest-build-provenance@v3
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ steps.push-to-quay.outputs.digest }}
+          subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-and-push-harbor.outputs.digest }}
           push-to-registry: true

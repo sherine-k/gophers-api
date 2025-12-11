@@ -22,20 +22,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare auth
-        run: |
-          auth_file=$(cat << 'EOF1'
-          {
-            "auths": {
-              "registry.redhat.io": {
-                "auth": "${{ secrets.REGISTRY_TOKEN }}",
-                "email": "skhoury@redhat.com"
-              }
-            }
-          }
-          EOF1
-          )
-          echo "$auth_file" > /tmp/auth.json
+      # - name: Prepare auth
+      #   run: |
+      #     auth_file=$(cat << 'EOF1'
+      #     {
+      #       "auths": {
+      #         "registry.redhat.io": {
+      #           "auth": "${{ secrets.REGISTRY_TOKEN }}",
+      #           "email": "skhoury@redhat.com"
+      #         }
+      #       }
+      #     }
+      #     EOF1
+      #     )
+      #     echo "$auth_file" > /tmp/auth.json
 
       - name: Podman login
         uses: redhat-actions/podman-login@main
@@ -43,7 +43,7 @@ jobs:
           registry: quay.io
           username: skhoury
           password: ${{ secrets.QUAY_TOKEN }}
-          auth_file_path: /tmp/auth.json
+          # auth_file_path: /tmp/auth.json
       
       - name: Buildah build
         id: build-image
@@ -51,7 +51,7 @@ jobs:
         with:
           image: ${{ env.QUAY_REGISTRY }}/${{ env.IMAGE_NAME }}
           containerfiles: ./Dockerfile
-          extra_args: "--authfile /tmp/auth.json"
+          # extra_args: "--authfile /tmp/auth.json"
           tags: latest
       - name: Buildah push
         id: push-to-quay

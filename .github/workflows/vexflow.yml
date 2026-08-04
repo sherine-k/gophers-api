@@ -27,7 +27,7 @@ jobs:
           cache: false
 
       - name: Install vexflow
-        run:  go install github.com/sherine-k/vexflow@workaround
+        run: go install github.com/carabiner-dev/vexflow@latest
 
       - name: Configure git credentials
         run: |
